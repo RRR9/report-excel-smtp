@@ -16,47 +16,38 @@ namespace ExcelReportBabilon
         public static void Start(string dateBegin, string dateEnd)
         {
             Excel.Workbook ExcelWB = null;
-            try
+            _log.Info("Start reporting:...");
+            Excel.Application ExcelApp = new Excel.Application();
+
+            ExcelWB = ExcelApp.Workbooks.Open(@"E:\Babilon Excel report\отчёт_babilon.xlsx");
+
+            Excel._Worksheet ExcelWS = (Excel._Worksheet)(ExcelWB.ActiveSheet);
+            _log.Info("Get payments:...");
+            DataTable dt = GetData("GetPaymentsBabilon", new SqlParameter[]
             {
-                _log.Info("Start reporting:...");
-                Excel.Application ExcelApp = new Excel.Application();
+                new SqlParameter("@dateBegin", dateBegin),
+                new SqlParameter("@dateEnd", dateEnd)
+            });
 
-                ExcelWB = ExcelApp.Workbooks.Open(@"E:\Babilon Excel report\отчёт_babilon.xlsx");
-
-                Excel._Worksheet ExcelWS = (Excel._Worksheet)(ExcelWB.ActiveSheet);
-                _log.Info("Get payments:...");
-                DataTable dt = GetData("GetPaymentsBabilon", new SqlParameter[]
-                {
-                    new SqlParameter("@dateBegin", dateBegin),
-                    new SqlParameter("@dateEnd", dateEnd)
-                });
-
-                int iRow = 4;
-                _log.Info("filling excel file:...");
-                foreach (DataRow row in dt.Rows)
-                {
-                    ExcelWS.Cells[iRow, 2] = row["RegDateTime"].ToString();
-                    ExcelWS.Cells[iRow, 3] = row["PaymentID"].ToString();
-
-                    ExcelWS.Cells[iRow, 4] = row["Number"].ToString();
-                    ExcelWS.Cells[iRow, 5] = row["PaySum"].ToString();
-                    ExcelWS.Cells[iRow, 6] = row["Status"].ToString();
-                    Excel.Range range = ExcelWS.Range[ExcelWS.Cells[iRow, 2], ExcelWS.Cells[iRow, 6]];
-                    range.Borders.Weight = Excel.XlBorderWeight.xlMedium;
-                    ++iRow;
-                }
-                _log.Info("Saving excel file:...");
-                ExcelWB.SaveAs($"E:\\Babilon Excel report\\отчёт_babilon_{DateTime.Now.AddDays(-1.0).ToString("yyyy-MM-dd")}.xlsx");
-                ExcelWB.Close();
-                _log.Info("Sending mail:...");
-                SendMail("", "");
-
-            }
-            catch (Exception ex)
+            int iRow = 4;
+            _log.Info("filling excel file:...");
+            foreach (DataRow row in dt.Rows)
             {
-                ExcelWB?.Close();
-                _log.Error(ex);
+                ExcelWS.Cells[iRow, 2] = row["RegDateTime"].ToString();
+                ExcelWS.Cells[iRow, 3] = row["PaymentID"].ToString();
+
+                ExcelWS.Cells[iRow, 4] = row["Number"].ToString();
+                ExcelWS.Cells[iRow, 5] = row["PaySum"].ToString();
+                ExcelWS.Cells[iRow, 6] = row["Status"].ToString();
+                Excel.Range range = ExcelWS.Range[ExcelWS.Cells[iRow, 2], ExcelWS.Cells[iRow, 6]];
+                range.Borders.Weight = Excel.XlBorderWeight.xlMedium;
+                ++iRow;
             }
+            _log.Info("Saving excel file:...");
+            ExcelWB.SaveAs($"E:\\Babilon Excel report\\отчёт_babilon_{DateTime.Now.AddDays(-1.0).ToString("yyyy-MM-dd")}.xlsx");
+            ExcelWB.Close();
+            _log.Info("Sending mail:...");
+            SendMail("", "");
         }
 
         private static void SendMail(string from, string to)
